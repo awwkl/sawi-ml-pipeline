@@ -92,10 +92,8 @@ if __name__ == "__main__":
     clf1 = svm.SVC(kernel='linear', probability=True, class_weight='balanced')
     clf2 = tree.DecisionTreeClassifier()
     clf3 = RandomForestClassifier()
-    # clf_list = [clf1, clf2, clf3]
-    clf_list = [clf1]
-    # projects = ['derby', 'mvn', 'lucence', 'phoenix', 'cass', 'jmeter', 'tomcat', 'ant', 'commons']
-    projects = ['ant']
+    clf_list = [clf1, clf2, clf3]
+    projects = ['derby', 'mvn', 'lucence', 'phoenix', 'cass', 'jmeter', 'tomcat', 'ant', 'commons']
     stopats = [1]
     # stopats = [0.7, 0.8, 0.9, 1]
 
