@@ -142,7 +142,7 @@ class Active(object):
         if int(pos + neg) > tmp:
             self.record['x'].append(int(pos + neg))
             self.record['pos'].append(int(pos))
-        # ---Sherry delete above--------
+      
         self.pool = np.where(np.array(self.body['code']) == "undetermined")[0]
         self.labeled = list(set(range(len(self.body['code']))) - set(self.pool))
         return pos, neg, total, realpos
