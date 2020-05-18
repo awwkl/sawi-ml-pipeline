@@ -69,9 +69,7 @@ class Active(object):
 
         training_x, training_y, testset_x, testset_y = cleaning.data_clean(self.path)
         training_y, testset_y = self.binary_label(training_y), self.binary_label(testset_y)
-        """
-        change the classifier to the same with line 475
-        """
+
         self.clf1 = tree.DecisionTreeClassifier()
         # self.clf1 = RandomForestClassifier()
         self.clf1.fit(training_x, training_y)
@@ -210,9 +208,7 @@ class Active(object):
     def train(self, pne=True, weighting=True):
         # clf = svm.SVC(kernel='linear', probability=True, class_weight='balanced') if weighting else svm.SVC(
         #     kernel='linear', probability=True)
-        """
-        change the classifier to the same as line 279
-        """
+
         clf = tree.DecisionTreeClassifier()
         # clf = RandomForestClassifier()
         poses = np.where(np.array(self.body['code']) == "yes")[0]
