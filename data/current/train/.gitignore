@@ -1,0 +1,6 @@
+# Ignore all files in this directory
+*
+
+# Except for the following
+!README.*
+!.gitignore

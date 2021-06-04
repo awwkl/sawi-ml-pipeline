@@ -7,26 +7,27 @@ from sklearn.preprocessing import LabelBinarizer
 
 
 def open(path):
-    trainingFiles = glob.glob(path + "/train/*.csv")
-    testingFiles = glob.glob(path + "/test/*.csv")
-
+    testFiles = path + "/test_set/totalFeatures5.csv"
+    trainingFiles = glob.glob(path + "/training_set/*.csv")
     list_training = []  # training set list
-    list_testing = []  # training set list
     list_header = []  # get the list of headers of dfs for training & testing
-
+    print("@@@ Training files: ", trainingFiles)
     for file in trainingFiles:
         df = pd.read_csv(file, index_col=None, header=None, skiprows=0)
+        # ########################
+        # for i in df.index:
+        #     row = df.iloc[i]      # get the i-th row of dataframe
+        #     list1.append(df)      # merge the training files into a list
+        # ##################### cannot not do this because different versions have different features
         head = df.iloc[0]
-        list_header.append(head.tolist())
-        list_training.append(df)
+        head.tolist()
+        list_header.append(head)  # list of header for training set
+        list_training.append(df)  # list of training set
 
-    for file in testingFiles:
-        df = pd.read_csv(file, index_col=None, header=None, skiprows=0)
-        head = df.iloc[0]
-        list_header.append(head.tolist())
-        list_testing.append(df)
-
-    return list_training, list_testing, list_header
+    testing = pd.read_csv(testFiles, index_col=None, header=None, skiprows=0)
+    # training = pd.concat(list1, axis=0, ignore_index=True)
+    list_header.append(testing.iloc[0].tolist())
+    return testing, list_training, list_header
 
 
 def df_get(df):
@@ -54,6 +55,7 @@ def common_get(list_header):
 
     golden_fea = ["F116", "F115", "F117", "F120", "F123", "F110", "F105", "F68", "F101", "F104", "F65", "F22",
                   " F94", "F71", "F72", "F25", "F3-", "F15", "F126", "F41", "F77"]
+    golden_fea.append("category")
     golden_list = []
     count_list = []
     for header in list_header:
@@ -70,23 +72,16 @@ def common_get(list_header):
     common = set(golden_list[0])
     for s in golden_list[1:]:
         common.intersection_update(s)
-
-    common.add('category')
     return common
 
 
-def trim(list_df, common):
-    final_df = pd.DataFrame()
-
-    for df in list_df:
-        df1, header = df_get(df)
-        for element in header:
-            if element not in common:
-                df1 = df1.drop(element, axis=1)
-        df_trim = df1
-        final_df = pd.concat([final_df, df_trim])
-
-    return final_df
+def trim(df, common):
+    df1, header = df_get(df)
+    for element in header:
+        if element not in common:
+            df1 = df1.drop(element, axis=1)
+    df_trim = df1
+    return df_trim
 
 
 def intersect(a, b):
@@ -178,19 +173,14 @@ def one_hot(df, index_num):
 
 
 def data_clean(path, seed = 0):
-    list_training, list_testing, list_header = open(path)
-
+    testing, list_training, list_header = open(path)
     common_header = common_get(list_header)
-    print("@@@ D - common_header: ", common_header)
-
     np.random.seed(seed)
     # training set
-    training_trim = trim(list_training, common_header)
-    training_trim.to_csv(path + "training_trim.csv")
+    training_trim = trim(list_training[3], common_header)  # ONLY USE THE VERSION 4 FOR TRAINING
 
     # testing set
-    testing_trim = trim(list_testing, common_header)
-    testing_trim.to_csv(path + "testing_trim.csv")
+    testing_trim = trim(testing, common_header)
 
     # training set
     training_x = training_trim.iloc[:, :-1]

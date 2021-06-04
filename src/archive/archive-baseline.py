@@ -16,7 +16,6 @@ import statistics
 import time
 import warnings
 import cleaning
-import sys
 
 """ NOTES:
       - requires Python 3.0 or greater
@@ -27,12 +26,6 @@ import sys
 def main(path, stop_at, clf, seed=0):
 
     training_x, training_y, testset_x, testset_y = cleaning.data_clean(path, seed)
-
-    print("training_x:", training_x.shape)
-    print("training_y:", len(training_y))
-    print("testset_x:", testset_x.shape)
-    print("testset_y:", len(testset_y))
-    
     # start_time = time.time()
     clf.fit(training_x, training_y)
     # print("running time", time.time() - start_time)
@@ -92,39 +85,43 @@ def main(path, stop_at, clf, seed=0):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+    # ############################################################
+    # weighting = True
+    # clf = svm.SVC(kernel='linear', probability=True, class_weight='balanced') if weighting else svm.SVC(
+    #     kernel='linear', probability=True)
     clf1 = svm.SVC(kernel='linear', probability=True, class_weight='balanced')
     clf2 = tree.DecisionTreeClassifier()
     clf3 = RandomForestClassifier()
-    clf_list = [clf1]
+    clf_list = [clf1, clf2, clf3]
+    projects = ['derby', 'mvn', 'lucence', 'phoenix', 'cass', 'jmeter', 'tomcat', 'ant', 'commons']
     stopats = [1]
     # stopats = [0.7, 0.8, 0.9, 1]
 
-    path = r'../data/current/'
-    sys.stdout = open(path + 'stdout.txt', 'w')
-
     for clf in clf_list:
-        print("@@@ A - classifier:", clf)
+        print("classifier:", clf)
         for stopat_id in stopats:
-            print("@@@ B - threshold stop at:", stopat_id)
-
-            AUC = []
-            cost = []
-            repeated_times = 3
-            for i in range(1, 1+repeated_times):
-                print("@@@ C - Repeat number:", i)
-                rate, auc = main(path, stop_at=stopat_id,
-                                    seed=int(time.time() * 1000) % (2 ** 32 - 1), clf=clf)
-                AUC.append(auc)
-                cost.append(rate)
-            AUC_med = statistics.median(AUC)
-            AUC_iqr = np.subtract(*np.percentile(AUC, [75, 25]))
-            COST_med = statistics.median(cost)
-            COST_iqr = np.subtract(*np.percentile(cost, [75, 25]))
             print("----------threshold stop at----------:", stopat_id)
-            # AUC score in Table six
-            print('AUC', AUC)
-            print('cost', cost)
-            print("AUC_median", AUC_med)
-            print("AUC_iqr", AUC_iqr)
-            print("COST_med", COST_med)
-            print("COST_iqr", COST_iqr)
+            for project in projects:
+                path = r'../data/total_features/' + project
+                print("-----------------" + project + "----------------------")
+                AUC = []
+                cost = []
+                repeated_times = 10
+                for i in range(1, 1+repeated_times):
+                    rate, auc = main(path, stop_at=stopat_id,
+                                     seed=int(time.time() * 1000) % (2 ** 32 - 1), clf=clf)
+                    AUC.append(auc)
+                    cost.append(rate)
+                AUC_med = statistics.median(AUC)
+                AUC_iqr = np.subtract(*np.percentile(AUC, [75, 25]))
+                COST_med = statistics.median(cost)
+                COST_iqr = np.subtract(*np.percentile(cost, [75, 25]))
+                print("----------threshold stop at----------:", stopat_id)
+                print("-----------------" + project + "----------------------")
+                # AUC score in Table six
+                print('AUC', AUC)
+                print('cost', cost)
+                print("AUC_median", AUC_med)
+                print("AUC_iqr", AUC_iqr)
+                print("COST_med", COST_med)
+                print("COST_iqr", COST_iqr)
