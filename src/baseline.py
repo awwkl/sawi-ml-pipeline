@@ -66,7 +66,18 @@ def main(path, stop_at, clf, seed=0):
     for iter in range(len(sp_obj.sp_explanations)):
         exp = sp_obj.sp_explanations[iter]
         exp.save_to_file(path + "lime-sp/" + 'lime_sp_obj_' + str(iter) + '.html')
-        
+
+    print("@@@ LIME - Investigating interesting instances: predicted differs from actual label", flush=True)
+    Path(path + "lime-differs/").mkdir(parents=True, exist_ok=True)
+    df_pred_and_actual = pd.DataFrame({ 'y_pred': y_pred, 'testset_y': testset_y })
+    differs_list = df_pred_and_actual.index[ df_pred_and_actual['y_pred'] != df_pred_and_actual['testset_y'] ].tolist()
+    print("Samples where predicted and actual label differs:", differs_list)
+
+    for iter, sample_no in enumerate(differs_list):
+        print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]), flush=True)
+        exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
+        exp.save_to_file(path + "lime-differs/" + 'lime_differs_' + str(iter) + '.html')
+
     # pos_at = list(clf.classes_).index("yes")
     pos_at = list(clf.classes_).index(1)
 
