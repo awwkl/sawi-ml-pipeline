@@ -211,7 +211,9 @@ def data_clean(path, seed = 0):
     min_max_scaler = preprocessing.MinMaxScaler()
     scaler = MinMaxScaler()
 
-    testset_x = min_max_scaler.fit_transform(np.asarray(testset_x))
-    training_x = min_max_scaler.fit_transform(np.asarray(training_x))
+    # testset_x = min_max_scaler.fit_transform(np.asarray(testset_x))
+    # training_x = min_max_scaler.fit_transform(np.asarray(training_x))
+    testset_x = pd.DataFrame(scaler.fit_transform(testset_x), columns = testset_x.columns)
+    training_x = pd.DataFrame(scaler.fit_transform(training_x), columns = training_x.columns)
 
     return training_x, training_y, testset_x, testset_y

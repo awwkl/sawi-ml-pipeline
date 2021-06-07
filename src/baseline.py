@@ -17,6 +17,10 @@ import time
 import warnings
 import cleaning
 import sys
+from pathlib import Path
+import lime
+import lime.lime_tabular
+from lime import submodular_pick
 
 """ NOTES:
       - requires Python 3.0 or greater
@@ -32,11 +36,37 @@ def main(path, stop_at, clf, seed=0):
     print("training_y:", len(training_y))
     print("testset_x:", testset_x.shape)
     print("testset_y:", len(testset_y))
-    
-    # start_time = time.time()
-    clf.fit(training_x, training_y)
-    # print("running time", time.time() - start_time)
 
+    training_x.to_csv(path + "training_x.csv")
+    testset_x.to_csv(path + "testset_x.csv")
+    
+    clf.fit(training_x, training_y)
+    y_pred = clf.predict(testset_x)
+
+    print(metrics.classification_report(testset_y, y_pred))
+    print("accuracy:", metrics.accuracy_score(testset_y, y_pred))
+    tn, fp, fn, tp = metrics.confusion_matrix(testset_y, y_pred).ravel()
+    print("@@@ tn: {}, fp: {}, fn: {}, tp: {}".format(tn, fp, fn, tp))
+
+    print("@@@ LIME - Creating explainer", flush=True)
+    feature_names =  training_x.columns.values.tolist()
+    explainer = lime.lime_tabular.LimeTabularExplainer(np.asarray(training_x), feature_names=feature_names, discretize_continuous=True)
+
+    print("@@@ LIME - Random Sampling of Instances", flush=True)
+    Path(path + "lime-random/").mkdir(parents=True, exist_ok=True)
+    for iter in range(10):
+        sample_no = np.random.randint(0, testset_x.shape[0])
+        print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]))
+        exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
+        exp.save_to_file(path + "lime-random/" + 'lime_random_' + str(iter) + '.html')
+
+    print("@@@ LIME - Submodular Pick", flush=True)
+    Path(path + "lime-sp/").mkdir(parents=True, exist_ok=True)
+    sp_obj = submodular_pick.SubmodularPick(explainer, np.asarray(training_x), clf.predict_proba, sample_size=100, num_features=10, num_exps_desired=10)
+    for iter in range(len(sp_obj.sp_explanations)):
+        exp = sp_obj.sp_explanations[iter]
+        exp.save_to_file(path + "lime-sp/" + 'lime_sp_obj_' + str(iter) + '.html')
+        
     # pos_at = list(clf.classes_).index("yes")
     pos_at = list(clf.classes_).index(1)
 
@@ -109,7 +139,7 @@ if __name__ == "__main__":
 
             AUC = []
             cost = []
-            repeated_times = 3
+            repeated_times = 1
             for i in range(1, 1+repeated_times):
                 print("@@@ C - Repeat number:", i)
                 rate, auc = main(path, stop_at=stopat_id,
