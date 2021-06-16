@@ -21,6 +21,8 @@ from pathlib import Path
 import lime
 import lime.lime_tabular
 from lime import submodular_pick
+import shap
+import matplotlib.pyplot as plt
 
 """ NOTES:
       - requires Python 3.0 or greater
@@ -45,39 +47,55 @@ def main(path, stop_at, clf, seed=0):
 
     print(metrics.classification_report(testset_y, y_pred))
     print("accuracy:", metrics.accuracy_score(testset_y, y_pred))
+    f1_score_pos = metrics.f1_score(testset_y, y_pred, average=None)[1]   # get the f1-score for the positive class only
+    print("f1-score_pos:", f1_score_pos)
     tn, fp, fn, tp = metrics.confusion_matrix(testset_y, y_pred).ravel()
     print("@@@ tn: {}, fp: {}, fn: {}, tp: {}".format(tn, fp, fn, tp))
 
-    print("@@@ LIME - Creating explainer", flush=True)
-    feature_names =  training_x.columns.values.tolist()
-    explainer = lime.lime_tabular.LimeTabularExplainer(np.asarray(training_x), feature_names=feature_names, discretize_continuous=True)
+    # print("@@@ LIME - Creating explainer", flush=True)
+    # feature_names =  training_x.columns.values.tolist()
+    # explainer = lime.lime_tabular.LimeTabularExplainer(np.asarray(training_x), feature_names=feature_names, discretize_continuous=True)
 
-    print("@@@ LIME - Random Sampling of Instances", flush=True)
-    Path(path + "lime-random/").mkdir(parents=True, exist_ok=True)
-    for iter in range(10):
-        sample_no = np.random.randint(0, testset_x.shape[0])
-        print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]))
-        exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
-        exp.save_to_file(path + "lime-random/" + 'lime_random_' + str(iter) + '.html')
+    # print("@@@ LIME - Random Sampling of Instances", flush=True)
+    # Path(path + "lime-random/").mkdir(parents=True, exist_ok=True)
+    # for iter in range(10):
+    #     sample_no = np.random.randint(0, testset_x.shape[0])
+    #     print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]))
+    #     exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
+    #     exp.save_to_file(path + "lime-random/" + 'lime_random_' + str(iter) + '.html')
 
-    print("@@@ LIME - Submodular Pick", flush=True)
-    Path(path + "lime-sp/").mkdir(parents=True, exist_ok=True)
-    sp_obj = submodular_pick.SubmodularPick(explainer, np.asarray(training_x), clf.predict_proba, sample_size=100, num_features=10, num_exps_desired=10)
-    for iter in range(len(sp_obj.sp_explanations)):
-        exp = sp_obj.sp_explanations[iter]
-        exp.save_to_file(path + "lime-sp/" + 'lime_sp_obj_' + str(iter) + '.html')
+    # print("@@@ LIME - Submodular Pick", flush=True)
+    # Path(path + "lime-sp/").mkdir(parents=True, exist_ok=True)
+    # sp_obj = submodular_pick.SubmodularPick(explainer, np.asarray(training_x), clf.predict_proba, sample_size=100, num_features=10, num_exps_desired=10)
+    # for iter in range(len(sp_obj.sp_explanations)):
+    #     exp = sp_obj.sp_explanations[iter]
+    #     exp.save_to_file(path + "lime-sp/" + 'lime_sp_obj_' + str(iter) + '.html')
 
-    print("@@@ LIME - Investigating interesting instances: predicted differs from actual label", flush=True)
-    Path(path + "lime-differs/").mkdir(parents=True, exist_ok=True)
-    df_pred_and_actual = pd.DataFrame({ 'y_pred': y_pred, 'testset_y': testset_y })
-    differs_list = df_pred_and_actual.index[ df_pred_and_actual['y_pred'] != df_pred_and_actual['testset_y'] ].tolist()
-    print("Samples where predicted and actual label differs:", differs_list)
+    # print("@@@ LIME - Investigating interesting instances: predicted differs from actual label", flush=True)
+    # Path(path + "lime-differs/").mkdir(parents=True, exist_ok=True)
+    # df_pred_and_actual = pd.DataFrame({ 'y_pred': y_pred, 'testset_y': testset_y })
+    # differs_list = df_pred_and_actual.index[ df_pred_and_actual['y_pred'] != df_pred_and_actual['testset_y'] ].tolist()
+    # print("Samples where predicted and actual label differs:", differs_list)
 
-    for iter, sample_no in enumerate(differs_list):
-        print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]), flush=True)
-        exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
-        exp.save_to_file(path + "lime-differs/" + 'lime_differs_' + str(iter) + '.html')
+    # for iter, sample_no in enumerate(differs_list):
+    #     print("iter: %d, sample_no: %d, actual label: %s, predicted: %s" % (iter, sample_no, testset_y[sample_no], y_pred[sample_no]), flush=True)
+    #     exp = explainer.explain_instance(testset_x.iloc[sample_no], clf.predict_proba, num_features=10)
+    #     exp.save_to_file(path + "lime-differs/" + 'lime_differs_' + str(iter) + '.html')
 
+    # print("@@@ SHAP - Creating explainer", flush=True)
+    # shap_explainer = shap.KernelExplainer(clf.predict_proba, training_x.sample(200))
+
+    # print("@@@ SHAP - Estimate the SHAP values for a set of samples", flush=True)
+    # shap_values = shap_explainer.shap_values(training_x.sample(200), n_samples=2)
+
+    # # print("@@@ SHAP - Predicting a sample", flush=True)
+    # # shap.plots.waterfall(shap_values[0])
+
+    # print("@@@ SHAP - Saving to file", flush=True)
+    # fig = shap.summary_plot(shap_values, training_x, show=False)
+    # plt.savefig(path + 'shap_summary.png')
+
+    
     # pos_at = list(clf.classes_).index("yes")
     pos_at = list(clf.classes_).index(1)
 
@@ -127,16 +145,16 @@ def main(path, stop_at, clf, seed=0):
     # ########
     print("total recall stop_at", total_recall[stop])
     # print("total recall stop_before", total_recall[stop - 1])
-    return rate[stop], auc
+    return rate[stop], auc, f1_score_pos
 
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
     clf1 = svm.SVC(kernel='linear', probability=True, class_weight='balanced')
-    clf2 = tree.DecisionTreeClassifier()
-    clf3 = RandomForestClassifier()
-    clf_list = [clf1]
+    clf2 = RandomForestClassifier()
+    clf3 = tree.DecisionTreeClassifier()
+    clf_list = [clf1, clf2, clf3]
     stopats = [1]
     # stopats = [0.7, 0.8, 0.9, 1]
 
@@ -150,13 +168,17 @@ if __name__ == "__main__":
 
             AUC = []
             cost = []
-            repeated_times = 1
+            f1_pos_list = []
+            
+            repeated_times = 3
             for i in range(1, 1+repeated_times):
-                print("@@@ C - Repeat number:", i)
-                rate, auc = main(path, stop_at=stopat_id,
+                print("@@@ C - Repeat number:", i, flush=True)
+                rate, auc, f1_pos = main(path, stop_at=stopat_id,
                                     seed=int(time.time() * 1000) % (2 ** 32 - 1), clf=clf)
                 AUC.append(auc)
                 cost.append(rate)
+                f1_pos_list.append(f1_pos)
+            f1_pos_med = statistics.median(f1_pos_list)
             AUC_med = statistics.median(AUC)
             AUC_iqr = np.subtract(*np.percentile(AUC, [75, 25]))
             COST_med = statistics.median(cost)
@@ -164,8 +186,10 @@ if __name__ == "__main__":
             print("----------threshold stop at----------:", stopat_id)
             # AUC score in Table six
             print('AUC', AUC)
-            print('cost', cost)
             print("AUC_median", AUC_med)
             print("AUC_iqr", AUC_iqr)
+            print('cost', cost)
             print("COST_med", COST_med)
             print("COST_iqr", COST_iqr)
+            print("f1_pos_list", f1_pos_list)
+            print("f1_pos_med", f1_pos_med)

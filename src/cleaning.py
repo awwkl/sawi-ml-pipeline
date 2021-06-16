@@ -52,6 +52,8 @@ def common_get(list_header):
     :return: common header
     """
 
+    # golden_fea = ["F123", "F105", "F68", "F101", "F104", "F65", "F22",
+    #               " F94", "F71", "F72", "F25", "F3-", "F15", "F126", "F41", "F77"]  # removed leaked features
     golden_fea = ["F116", "F115", "F117", "F120", "F123", "F110", "F105", "F68", "F101", "F104", "F65", "F22",
                   " F94", "F71", "F72", "F25", "F3-", "F15", "F126", "F41", "F77"]
     golden_list = []
